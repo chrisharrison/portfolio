@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace ChrisHarrison\Portfolio\Model;
 
 use ChrisHarrison\Portfolio\Model\Values\Allocations;
