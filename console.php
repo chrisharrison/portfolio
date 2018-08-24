@@ -1,8 +1,10 @@
 <?php
 
+use ChrisHarrison\Portfolio\Application\Container;
+use Symfony\Component\Console\Application;
+
 require 'vendor/autoload.php';
 
-use ChrisHarrison\Portfolio\Application\Monolith;
-
-$monolith = new Monolith;
-$monolith->output();
+$container = new Container;
+$app = $container->get(Application::class);
+$app->run();
