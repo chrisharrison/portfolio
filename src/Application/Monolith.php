@@ -6,6 +6,7 @@ namespace ChrisHarrison\Portfolio\Application;
 
 use ChrisHarrison\Portfolio\Model\Fund;
 use ChrisHarrison\Portfolio\Model\Portfolio;
+use ChrisHarrison\Portfolio\Model\Values\Allocation;
 use ChrisHarrison\Portfolio\Model\Values\Allocations;
 use ChrisHarrison\Portfolio\Model\Values\FundAllocation;
 use ChrisHarrison\Portfolio\Model\Values\CountryAllocation;
@@ -41,6 +42,7 @@ final class Monolith
 	public function output()
 	{
 		foreach ($this->portfolio->getAllocations()->resolve()->asArray() as $allocation) {
+		    /* @var Allocation $allocation */
 			echo $allocation->getTag() . ' : ' . $allocation->getValue() . '%' . PHP_EOL;
 		}
 	}

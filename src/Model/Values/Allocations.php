@@ -26,6 +26,7 @@ final class Allocations
 			if ($allocation instanceof FundAllocation) {
 				$fundAllocations = $allocation->getTag()->getAllocations()->resolve()->asArray();
 				foreach ($fundAllocations as $fundAllocation) {
+				    /* @var FundAllocation $fundAllocation */
 					$calculatedValue = ($allocation->getValue()/100)*$fundAllocation->getValue();
 					$out[] = $fundAllocation->withValue($calculatedValue);
 				}
