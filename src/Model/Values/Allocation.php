@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace ChrisHarrison\Portfolio\Model\Values;
 
+use function get_class;
+
 abstract class Allocation
 {
 	private $tag;
@@ -25,7 +27,16 @@ abstract class Allocation
 		return $this->value;
 	}
 
-	public function withValue(float $value)
+	public function getType(): string
+    {
+        return get_class($this);
+    }
+
+    /**
+     * @param float $value
+     * @return static
+     */
+    public function withValue(float $value)
 	{
 		return new static($this->tag, $value);
 	}

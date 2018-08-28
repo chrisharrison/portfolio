@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace ChrisHarrison\Portfolio\Application\Commands;
 
-use ChrisHarrison\Portfolio\Application\Factories\FundFactory;
-use ChrisHarrison\Portfolio\Application\Factories\PortfolioFactory;
 use ChrisHarrison\Portfolio\Application\Outputters\TabularOutputter;
+use ChrisHarrison\Portfolio\Model\FundCollection;
+use ChrisHarrison\Portfolio\Model\PortfolioCollection;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -14,19 +14,19 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 final class Display extends Command
 {
-    private $portfolioFactory;
-    private $fundFactory;
+    private $portfolioCollection;
+    private $fundCollection;
     private $tabularOutputter;
 
     protected static $defaultName = 'display';
 
     public function __construct(
-        PortfolioFactory $portfolioFactory,
-        FundFactory $fundFactory,
+        PortfolioCollection $portfolioCollection,
+        FundCollection $fundCollection,
         TabularOutputter $tabularOutputter
     ) {
-        $this->portfolioFactory = $portfolioFactory;
-        $this->fundFactory = $fundFactory;
+        $this->portfolioCollection = $portfolioCollection;
+        $this->fundCollection = $fundCollection;
         $this->tabularOutputter = $tabularOutputter;
         parent::__construct();
     }
@@ -35,12 +35,12 @@ final class Display extends Command
     {
         $this->setName(static::getDefaultName());
         $this->setDescription('Display a portfolio.');
-        $this->addArgument('portfolio',InputArgument::OPTIONAL, 'Portfolio to load', 'default');
+        $this->addArgument('portfolio',InputArgument::REQUIRED, 'Portfolio to load');
     }
 
     public function execute(InputInterface $input, OutputInterface $output): void
     {
-        $portfolio = $this->portfolioFactory->get($input->getArgument('portfolio'));
+        $portfolio = $this->portfolioCollection->getById($input->getArgument('portfolio'));
         $this->tabularOutputter->output($output, $portfolio);
     }
 }

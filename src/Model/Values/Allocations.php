@@ -4,13 +4,17 @@ declare(strict_types=1);
 
 namespace ChrisHarrison\Portfolio\Model\Values;
 
+use ChrisHarrison\Portfolio\Model\Exceptions\InvalidAllocations;
+use function is_a;
+use function serialize;
+
 final class Allocations
 {
 	private $allocations;
 
 	public function __construct(array $allocations)
 	{
-		$this->allocations = $allocations;
+		$this->allocations = $this->consolidate($allocations);
 	}
 
 	public function asArray(): array
@@ -18,39 +22,54 @@ final class Allocations
 		return $this->allocations;
 	}
 
-	public function resolve(): Allocations
-	{
-		$out = [];
+	public function byAllocationType(string $type): Allocations
+    {
+        $out = [];
+        foreach ($this->allocations as $allocation) {
+            if (is_a($allocation, $type)) {
+                $out[] = $allocation;
+            }
+        }
+        return new Allocations($out);
+    }
 
-		foreach ($this->allocations as $allocation) {
-			if ($allocation instanceof FundAllocation) {
-				$fundAllocations = $allocation->getTag()->getAllocations()->resolve()->asArray();
-				foreach ($fundAllocations as $fundAllocation) {
-				    /* @var FundAllocation $fundAllocation */
-					$calculatedValue = ($allocation->getValue()/100)*$fundAllocation->getValue();
-					$out[] = $fundAllocation->withValue($calculatedValue);
-				}
-				continue;
-			}
-			$out[] = $allocation;
-		}
+    public function funds(): Allocations
+    {
+        return $this->byAllocationType(FundAllocation::class);
+    }
 
-		return (new Allocations($out))->consolidate();
-	}
+    public function countries(): Allocations
+    {
+        return $this->byAllocationType(CountryAllocation::class);
+    }
 
-	private function consolidate(): Allocations
+    public function regions(): Allocations
+    {
+        return $this->byAllocationType(RegionAllocation::class);
+    }
+
+    public function assetClasses(): Allocations
+    {
+        return $this->byAllocationType(AssetClassAllocation::class);
+    }
+
+	private static function consolidate(array $allocations): array
 	{
 		$index = [];
 		$out = [];
 
-		foreach($this->allocations as $allocation) {
+		foreach($allocations as $allocation) {
 
-			$type = get_class($allocation);
-			$tag = $allocation->getTag();
+            if (!$allocation instanceof Allocation) {
+                throw new InvalidAllocations('Allocations can only contain Allocations.');
+            }
+
+			$type = $allocation->getType();
+			$tag = serialize($allocation->getTag());
 			$value = $allocation->getValue();
 
 			if (!isset($index[$type][$tag])) {
-				$index[$type][$tag] = count($out);
+			    $index[$type][$tag] = count($out);
 				$out[] = $allocation;
 				continue;
 			}
@@ -60,6 +79,32 @@ final class Allocations
 
 		}
 
-		return new Allocations($out);
+		return $out;
 	}
+
+	public function expand(): Allocations
+    {
+        $out = [];
+
+        foreach ($this->allocations as $allocation) {
+            if ($allocation instanceof FundAllocation) {
+                $out = $this->expandFundAllocation($allocation, $out);
+                continue;
+            }
+            $out[] = $allocation;
+        }
+
+        return new Allocations($out);
+    }
+
+    private function expandFundAllocation(FundAllocation $fundAllocation, array $carry): array
+    {
+        $subAllocations = $fundAllocation->getTag()->getAllocations()->expand();
+        foreach ($subAllocations->asArray() as $allocation) {
+            /* @var Allocation $allocation */
+            $carry[] = $allocation->withValue(($fundAllocation->getValue()/100)*($allocation->getValue()/100)*100);
+        }
+
+        return $carry;
+    }
 }
